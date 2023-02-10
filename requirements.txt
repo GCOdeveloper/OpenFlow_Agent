@@ -1,0 +1,5 @@
+python-openflow
+grpcio
+grpcio-tools
+scapy
+bitstring

@@ -1,0 +1,66 @@
+version: "3"
+
+services:
+  GUI_openflow:
+    build:
+      context: .
+      dockerfile: Dockerfile_GUI
+    image: uva/gui_openflow:1.1
+    container_name: openflow_GUI
+    restart: unless-stopped
+    volumes:
+      - /home/jenkins/Agente_OF_Voltha/carlos/OpenFlow_agent/GUI:/usr/src/app/OpenflowGUI/carlos
+      - /home/jenkins/Agente_OF_Voltha/david/OpenFlow_agent/GUI:/usr/src/app/OpenflowGUI/david
+      - /home/jenkins/Agente_OF_Voltha/alfredo/OpenFlow_agent/GUI:/usr/src/app/OpenflowGUI/alfredo
+    depends_on:
+      - "onos"
+    links:
+      - "onos"
+    tty: true
+    stdin_open: true
+    networks:
+      openflow:
+        ipv4_address: 10.0.60.4
+
+  agente_openflow:
+    build:
+      context: .
+      dockerfile: Dockerfile_agent
+    image: uva/agente_openflow:1.1
+    container_name: openflow_agent
+    restart: unless-stopped
+    volumes:
+      - /home/jenkins/Agente_OF_Voltha/david/OpenFlow_agent:/usr/src/app/OpenFlowAgent/david
+      - /home/jenkins/Agente_OF_Voltha/carlos/OpenFlow_agent:/usr/src/app/OpenFlowAgent/carlos
+    depends_on:
+      - "onos"
+    links:
+      - "onos"
+    tty: true
+    stdin_open: true
+    networks:
+      openflow:
+        ipv4_address: 10.0.60.3
+
+  onos:
+    image: "onosproject/onos:2.5.9"
+    container_name: openflow_onos
+    restart: unless-stopped
+    ports:
+      - "8102:8101" # ssh
+      - "8182:8181" # UI
+      - "5006:5005"
+      - "831:830"
+    tty: true
+    networks:
+      openflow:
+        ipv4_address: 10.0.60.2
+
+networks:
+  openflow:
+    driver: bridge
+    name: custom_openflow
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.0.60.0/24"

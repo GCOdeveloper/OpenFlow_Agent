@@ -1,0 +1,13 @@
+FROM python:3.7
+
+WORKDIR /usr/src/app
+
+#Modules
+COPY ./GUI/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+WORKDIR /usr/src/app/OpenflowGUI
+#COPY . .
+
+CMD [ "bash" ]
+#CMD [ "python3", "./UserGUI.py" ]

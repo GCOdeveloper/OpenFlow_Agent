@@ -1,0 +1,39 @@
+FROM python:3.7
+
+RUN apt-get update && \
+apt-get install -y wget
+
+WORKDIR /usr/src/app
+
+# OpenFlow & gRPC python modules
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# GoogleApis modules
+RUN pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+# Voltha protos
+ARG OPENOLT_PROTO_VERSION=v5.2.1
+ENV OPENOLT_PROTO_VERSION ${OPENOLT_PROTO_VERSION}
+
+WORKDIR /usr/local/lib/python3.7/site-packages/voltha_protos
+
+RUN wget https://raw.githubusercontent.com/opencord/voltha-protos/${OPENOLT_PROTO_VERSION}/protos/voltha_protos/common.proto
+RUN wget https://raw.githubusercontent.com/opencord/voltha-protos/${OPENOLT_PROTO_VERSION}/protos/voltha_protos/openolt.proto
+RUN wget https://raw.githubusercontent.com/opencord/voltha-protos/${OPENOLT_PROTO_VERSION}/protos/voltha_protos/tech_profile.proto
+RUN wget https://raw.githubusercontent.com/opencord/voltha-protos/${OPENOLT_PROTO_VERSION}/protos/voltha_protos/ext_config.proto
+RUN wget https://raw.githubusercontent.com/opencord/voltha-protos/${OPENOLT_PROTO_VERSION}/protos/voltha_protos/extensions.proto
+
+WORKDIR /usr/local/lib/python3.7/site-packages
+
+RUN python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ./voltha_protos/common.proto
+RUN python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ./voltha_protos/openolt.proto
+RUN python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ./voltha_protos/tech_profile.proto
+RUN python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ./voltha_protos/ext_config.proto
+RUN python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ./voltha_protos/extensions.proto
+
+WORKDIR /usr/src/app/OpenFlowAgent
+#COPY . .
+
+CMD ["bash"]
+#CMD [ "python3", "./Openflow_agent/AgenteOpenFlow.py" ]
