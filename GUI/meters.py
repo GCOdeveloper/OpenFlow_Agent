@@ -39,4 +39,7 @@ class Meter(MeterStruct):
 
     @staticmethod
     def getMetersIds(dictServiceParams):
-        return [dictServiceParams["upstreamMeterId"], dictServiceParams["downstreamMeterId"]]
+        if dictServiceParams["serviceType"] == "multicast":
+            return [dictServiceParams["downstreamMeterId"]]
+        else:
+            return [dictServiceParams["upstreamMeterId"], dictServiceParams["downstreamMeterId"]]

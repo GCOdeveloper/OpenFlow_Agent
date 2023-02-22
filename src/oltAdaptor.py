@@ -416,7 +416,7 @@ class OLTadaptor:
         if result_msg.getfieldval("success_code") == 0:
             mib_key = (intf_id, onu_id)
             if mib_key in self._omci_mibs:
-                self._omci_mibs.remove(mib_key)
+                self._omci_mibs.pop(mib_key)
             return True
         else: # Reboot the ONT
             check = self.omci_rebootOnt(intf_id, onu_id)

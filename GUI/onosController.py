@@ -2,12 +2,15 @@ import json
 import os.path
 from urllib.parse import urlparse
 
+import time
+
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.structures import CaseInsensitiveDict
 
-from flows import Flow
+from flows import Flow, FlowVoIp, FlowMulticast
 from meters import Meter
+from groups import Group
 from exceptions import NoInputError, WrongInputError
 
 class ListOfDevices(list):
@@ -21,7 +24,7 @@ class ListOfDevices(list):
     def __str__(self):
         devicesDict = {}
         for i in range(len(self.copy())):
-            devicesDict["device_" + str(i)] = self.copy()[i]
+            devicesDict["OLT_" + str(i)] = self.copy()[i]
         return json.dumps(devicesDict, indent=2)
 
     def getDevicesIds(self):
@@ -58,6 +61,15 @@ class ListOfPorts(dict):
             if port["port"] == port_id:
                 return True
         return False
+
+    def getPortsIds(self, device_id):
+        listPortIds = {}
+        for port in self.copy()[device_id]:
+            #listPortIds.append(port["port"])
+            listPortIds[port["annotations"]["portName"]]=port["port"]
+            
+        return listPortIds
+
 
 class ListOfFlows(dict):
 
@@ -119,6 +131,28 @@ class ListOfMeters(dict):
                 return meter["id"]
         return None
 
+class ListOfGroups(dict):
+
+    def __init__(self, items=None):
+        super().__init__()
+        if isinstance(items, list):
+            for item in items:
+                self.append(item)
+
+    def append(self, item):
+        device_id = item.get("deviceId")
+        if device_id not in self.keys():
+            self.update({device_id : []})
+        listGroups = self.get(device_id)
+        listGroups.append(item)
+        self.update({device_id : listGroups})
+
+    def getGroupId(self, device_id, port):
+        for group in self.copy()[device_id]:
+            if (group["buckets"][0]["treatment"]["instructions"][0]["port"] == port ):
+                return group["id"]
+        return None
+
 class ONOSController:
 
     def __init__(self, ipONOS="0.0.0.0", portONOS=8181):
@@ -166,6 +200,12 @@ class ONOSController:
             return
 
         self.listPorts = ListOfPorts(resp.json()["ports"])
+
+
+    def all_ports_ids(self, device_id):
+        """List of Ids attached to all ports"""
+        self.getDevicePorts(device_id)
+        return self.listPorts.getPortsIds(device_id)
 
     def showDevicePorts(self, device_id):
         """Show all registered ports"""
@@ -217,7 +257,26 @@ class ONOSController:
         else:
             self.listMeters = None
 
-    def createPortService(self, dictConfig):
+    def getDeviceGroups(self, device_id):
+        """Get all registered meters"""
+
+        headers = CaseInsensitiveDict()
+        headers["Accept"] = "application/json"
+
+        url = "http://" + self.ipONOS + ":" + str(self.portONOS) + "/onos/v1/groups/" + device_id.replace(":", "%3A")
+
+        try:
+            resp = requests.get(url, auth=HTTPBasicAuth('onos', 'rocks'), headers=headers)
+        except requests.exceptions.HTTPError as err:
+            print ("\nHttp Error:", err)
+            return
+
+        if len(resp.json()["groups"]) != 0:
+            self.listGroups = ListOfGroups(resp.json()["groups"])
+        else:
+            self.listGroups = None
+
+    def createPortService(self, dictConfig, serviceType):
         """Create the required flows and meters for a service"""
 
         #Check if port already has a service
@@ -227,21 +286,28 @@ class ONOSController:
 
         #Upstream
         ##Creacion del meter de upstream
-        if not self.createMeter(dictConfig, "upstream"):
-            return
+        if serviceType != "multicast":
+            if not self.createMeter(dictConfig, "upstream"):
+                return
+            ##Creacion del flow de upstream
+            if not self.createFlow(dictConfig, "upstream", serviceType):
+                return
 
-        ##Creacion del flow de upstream
-        if not self.createFlow(dictConfig, "upstream"):
-            return
 
         #Downstream
         ##Creacion del meter de downstream
         if not self.createMeter(dictConfig, "downstream"):
             return
 
+        #Creacion del group para servicio multicast
+        if serviceType == "multicast":
+            if not self.createGroup(dictConfig):
+                return
+
         #Creacion del flow de downstream
-        if not self.createFlow(dictConfig, "downstream"):
+        if not self.createFlow(dictConfig, "downstream", serviceType):
             return
+
 
     def createMeter(self, dictConfig, flowType):
         """Create the required meter for a service"""
@@ -285,11 +351,20 @@ class ONOSController:
 
         return True
 
-    def createFlow(self, dictConfig, flowType):
+    def createFlow(self, dictConfig, flowType, service):
         """Create the required flow for a service"""
 
-        flowConfiguration = Flow(flowType)
-        serviceType = flowConfiguration.configFlow(dictConfig)
+        if service == "ethernet":
+            flowConfiguration = Flow(flowType)
+            serviceType = flowConfiguration.configFlow(dictConfig)
+
+        if service == "voip":
+            flowConfiguration = FlowVoIp(flowType)
+            serviceType = flowConfiguration.configFlowVoIp(dictConfig)
+
+        if service == "multicast":
+            flowConfiguration = FlowMulticast(flowType)
+            serviceType = flowConfiguration.configFlowMulticast(dictConfig)
 
         if serviceType == "singleTag":
             url = "http://" + self.ipONOS + ":" + str(self.portONOS) + "/onos/v1/flows/" + flowConfiguration.singleTag["deviceId"].replace(":", "%3A") + "?appId=" + flowConfiguration.appId
@@ -330,6 +405,49 @@ class ONOSController:
 
         return True
 
+    def createGroup(self, dictConfig):
+        """Create the required group for a multicast service"""
+
+        if self.listGroups is None:
+            groupConfiguration = Group()
+            groupConfiguration.configGroup(dictConfig, "1")
+
+            url = "http://" + self.ipONOS + ":" + str(self.portONOS) + "/onos/v1/groups/" + dictConfig["deviceId"].replace(":", "%3A")
+
+            try:
+                resp = requests.post(url, auth=HTTPBasicAuth('onos', 'rocks'), headers=groupConfiguration.headers, json=groupConfiguration.group)
+                resp.raise_for_status()
+            except requests.exceptions.HTTPError as err:
+                print ("\nHttp Error:", err)
+                return False
+
+            input("Group Succesfully created")
+            self.getDeviceGroups(dictConfig["deviceId"])
+            dictConfig["GroupId"] = self.listGroups.getGroupId(dictConfig["deviceId"], dictConfig["ONUport"])
+        else:
+            if self.listGroups.getGroupId(dictConfig["deviceId"], dictConfig["ONUport"]) is None:
+                groupConfiguration = Group()
+                id_group = len(self.listGroups) + 1
+                groupConfiguration.configGroup(dictConfig, id_group)
+
+                url = "http://" + self.ipONOS + ":" + str(self.portONOS) + "/onos/v1/groups/" + dictConfig["deviceId"].replace(":", "%3A")
+
+                try:
+                    resp = requests.post(url, auth=HTTPBasicAuth('onos', 'rocks'), headers=groupConfiguration.headers, json=groupConfiguration.group)
+                    resp.raise_for_status()
+                except requests.exceptions.HTTPError as err:
+                    print ("\nHttp Error:", err)
+                    return False
+
+                input("Group Succesfully created")
+                self.getDeviceGroups(dictConfig["deviceId"])
+                dictConfig["GroupId"] = self.listGroups.getGroupId(dictConfig["deviceId"], dictConfig["ONUport"])
+            else:
+                input("Group already exist")
+                dictConfig["GroupId"] = self.listGroups.getGroupId(dictConfig["deviceId"], dictConfig["ONUport"])
+
+        return True
+
     def getFlowIdFromResponse(self, response):
         """Get flow id from http response headers"""
 
@@ -357,6 +475,7 @@ class ONOSController:
                 return
             listOfServiceFlows.append(self.getFlowFromId(device_id, flow_id))
 
+
         #Get Service params from flows
         dictServiceParams = Flow.getFlowsParams(listOfServiceFlows, port_id)
 
@@ -369,28 +488,47 @@ class ONOSController:
                 return
             listOfServiceMeters.append(self.getMeterFromId(device_id, meter_id))
 
-        upstreamGuaranteed = (listOfServiceMeters[0]["bands"][0]["rate"]
+        if dictServiceParams["serviceType"] == "multicast":
+            downstreamGuaranteed = (listOfServiceMeters[0]["bands"][0]["rate"]
                               if listOfServiceMeters[0]["bands"][0]["rate"] < listOfServiceMeters[0]["bands"][1]["rate"]
                               else listOfServiceMeters[0]["bands"][1]["rate"])
-        upstreamExcess = ((listOfServiceMeters[0]["bands"][1]["rate"] - listOfServiceMeters[0]["bands"][0]["rate"])
-                          if listOfServiceMeters[0]["bands"][1]["rate"] > listOfServiceMeters[0]["bands"][0]["rate"]
-                          else (listOfServiceMeters[0]["bands"][0]["rate"] - listOfServiceMeters[0]["bands"][1]["rate"]))
-        downstreamGuaranteed = (listOfServiceMeters[1]["bands"][0]["rate"]
-                                if listOfServiceMeters[1]["bands"][0]["rate"] < listOfServiceMeters[1]["bands"][1]["rate"]
-                                else listOfServiceMeters[1]["bands"][1]["rate"])
-        downstreamExcess = ((listOfServiceMeters[1]["bands"][1]["rate"] - listOfServiceMeters[1]["bands"][0]["rate"])
-                            if listOfServiceMeters[1]["bands"][1]["rate"] > listOfServiceMeters[1]["bands"][0]["rate"]
-                            else (listOfServiceMeters[1]["bands"][0]["rate"] - listOfServiceMeters[1]["bands"][1]["rate"]))
+            downstreamExcess = ((listOfServiceMeters[0]["bands"][1]["rate"] - listOfServiceMeters[0]["bands"][0]["rate"])
+                              if listOfServiceMeters[0]["bands"][1]["rate"] > listOfServiceMeters[0]["bands"][0]["rate"]
+                              else (listOfServiceMeters[0]["bands"][0]["rate"] - listOfServiceMeters[0]["bands"][1]["rate"]))
+    
 
-        #Print service configuration
-        print("\n\tService priority:", dictServiceParams["priority"])
-        if dictServiceParams.get("Stag") is not None:
-            print("\tStag Vlan:", dictServiceParams["Stag"])
-        print("\tCtag Vlan:", dictServiceParams["Ctag"])
-        print("\tUpstream guaranteed bandwith (Kbps):", upstreamGuaranteed)
-        print("\tUpstream excess bandwith (Kbps):", upstreamExcess)
-        print("\tDownstream guaranteed bandwith (Kbps):", downstreamGuaranteed)
-        print("\tDownstream excess bandwith (Kbps):", downstreamExcess)
+            #Print service configuration
+            print("\n\tService priority:", dictServiceParams["priority"])
+            if dictServiceParams.get("Stag") is not None:
+                print("\tStag Vlan:", dictServiceParams["Stag"])
+            print("\tCtag Vlan:", dictServiceParams["Ctag"])
+            print("\tDownstream guaranteed bandwith (Kbps):", downstreamGuaranteed)
+            print("\tDownstream excess bandwith (Kbps):", downstreamExcess)
+
+        else:
+
+            upstreamGuaranteed = (listOfServiceMeters[0]["bands"][0]["rate"]
+                                      if listOfServiceMeters[0]["bands"][0]["rate"] < listOfServiceMeters[0]["bands"][1]["rate"]
+                                      else listOfServiceMeters[0]["bands"][1]["rate"])
+            upstreamExcess = ((listOfServiceMeters[0]["bands"][1]["rate"] - listOfServiceMeters[0]["bands"][0]["rate"])
+                                  if listOfServiceMeters[0]["bands"][1]["rate"] > listOfServiceMeters[0]["bands"][0]["rate"]
+                                  else (listOfServiceMeters[0]["bands"][0]["rate"] - listOfServiceMeters[0]["bands"][1]["rate"]))
+            downstreamGuaranteed = (listOfServiceMeters[1]["bands"][0]["rate"]
+                                        if listOfServiceMeters[1]["bands"][0]["rate"] < listOfServiceMeters[1]["bands"][1]["rate"]
+                                        else listOfServiceMeters[1]["bands"][1]["rate"])
+            downstreamExcess = ((listOfServiceMeters[1]["bands"][1]["rate"] - listOfServiceMeters[1]["bands"][0]["rate"])
+                                    if listOfServiceMeters[1]["bands"][1]["rate"] > listOfServiceMeters[1]["bands"][0]["rate"]
+                                    else (listOfServiceMeters[1]["bands"][0]["rate"] - listOfServiceMeters[1]["bands"][1]["rate"]))
+
+            #Print service configuration
+            print("\n\tService priority:", dictServiceParams["priority"])
+            if dictServiceParams.get("Stag") is not None:
+                print("\tStag Vlan:", dictServiceParams["Stag"])
+            print("\tCtag Vlan:", dictServiceParams["Ctag"])
+            print("\tUpstream guaranteed bandwith (Kbps):", upstreamGuaranteed)
+            print("\tUpstream excess bandwith (Kbps):", upstreamExcess)
+            print("\tDownstream guaranteed bandwith (Kbps):", downstreamGuaranteed)
+            print("\tDownstream excess bandwith (Kbps):", downstreamExcess)
 
         #Delete Flows
         if action == "delete":
