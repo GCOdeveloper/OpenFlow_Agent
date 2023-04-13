@@ -37,7 +37,7 @@ Then, edit the configuration file according your specific scenario (modify the I
         }
     ]
 }
-´´´
+```
 
 Finally, execute the docker compose command.
 
