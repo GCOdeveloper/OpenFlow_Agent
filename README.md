@@ -1,7 +1,7 @@
 # OpenFlow_Agent
 
 ## Introduction
-The OpenFlow_Agent is a development which allows to configure a PON network through a simple RPC connection to the OLT and presenting the entire network as a single SDN device, having as much ports as users ports on the real network. This code must be executed on a computer or a server which has connectivity with every OLT deployed. Although, another code is needed inside each OLT, which may be downloaded form another proyects, such as opencord/openolt.
+The OpenFlow_Agent is a development which allows to configure a PON network through a simple RPC connection to the OLT and presenting the entire network as a single SDN device, having as much ports as users ports on the real network. This code must be executed on a computer or a server which has connectivity with every OLT deployed. Although, another code is needed inside each OLT, which may be downloaded form another proyects, such as [opencord/openolt](https://github.com/opencord/openolt).
 
 In order to add simplicity to the development, a menu-driven user interface has been created.
 
