@@ -1,7 +1,10 @@
 """
     Copyright 2023, University of Valladolid.
     
-    Contributors: David de Pintos, Carlos Manuel Sangrador, Noemí Merayo
+    Contributors: Carlos Manuel Sangrador, David de Pintos, Noemí Merayo,
+                  Alfredo Gonzalez, Miguel Campano.
+    
+    User Interface for GCOdeveloper/OpenFlow_Agent.
 
     This file is part of GCOdeveloper/OpenFlow_Agent.
 

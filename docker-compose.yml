@@ -1,17 +1,17 @@
 version: "3"
 
 services:
-  GUI_openflow:
+  UI_openflow:
     build:
       context: .
-      dockerfile: Dockerfile_GUI
+      dockerfile: Dockerfile_UI
     image: uva/gui_openflow:1.1
-    container_name: openflow_GUI
+    container_name: openflow_UI
     restart: unless-stopped
     volumes:
-      - /home/jenkins/Agente_OF_Voltha/carlos/OpenFlow_agent/GUI:/usr/src/app/OpenflowGUI/carlos
-      - /home/jenkins/Agente_OF_Voltha/david/OpenFlow_agent/GUI:/usr/src/app/OpenflowGUI/david
-      - /home/jenkins/Agente_OF_Voltha/alfredo/OpenFlow_agent/GUI:/usr/src/app/OpenflowGUI/alfredo
+      - /home/jenkins/Agente_OF_Voltha/carlos/OpenFlow_agent/UserInterface:/usr/src/app/OpenflowUI/carlos
+      - /home/jenkins/Agente_OF_Voltha/david/OpenFlow_agent/UserInterface:/usr/src/app/OpenflowUI/david
+      - /home/jenkins/Agente_OF_Voltha/alfredo/OpenFlow_agent/UserInterface:/usr/src/app/OpenflowUI/alfredo
     depends_on:
       - "onos"
     links:
