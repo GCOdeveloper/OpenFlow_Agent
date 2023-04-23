@@ -3,6 +3,7 @@
 ## 2023-04-23
 ### Added
 - LICENSE.md
+- CHANGELOG.MD
 
 ### Changed
 - License notes in all files
@@ -10,6 +11,8 @@
 ### Removed
 - Deprecated LICENSE.md
 
+| Commit  | Description |
+| ------- | ----------- |
 | f2c67e0 | Initial commit |
 | 7128217 | Initial version |
 | a3ac01d | GUI improvements |
