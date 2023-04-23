@@ -2,6 +2,7 @@
 
 ## 2023-04-23
 ### Added
+- Contact section on README
 - LICENSE.md
 - CHANGELOG.MD
 
