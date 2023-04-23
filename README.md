@@ -49,6 +49,6 @@ docker-compose up -d --build
 In order to achieve the correct communication with the OLT, it's a requeriment to install the openolt service on the OLT. It can be found on the public GitHub repository [opencord/openolt](https://github.com/opencord/openolt), where it's detailed the installation procedure.
 
 ## Contact
-This development belongs to GCOdeveloper. GCO is the optical communications research group from the University of Valladolid, Spain. As mainteiner and manager of the proyect, the group main contact is Noemí Merayo, whose mail address is as follows:
+This development belongs to GCOdeveloper. GCO is the optical communications research group from the University of Valladolid, Spain. As mainteiner and manager of the project, the group main contact is Noemí Merayo, whose mail address is as follows:
 
 [noemer@uva.es](mailto:noemer@uva.es)
