@@ -1,7 +1,7 @@
 # OpenFlow_Agent
 
 ## Introduction
-The OpenFlow_Agent is a development which allows to configure a PON network through a simple RPC connection to the OLT and presenting the entire network as a single SDN device, having as much ports as users ports on the real network. This code must be executed on a computer or a server which has connectivity with every OLT deployed. Although, another code is needed inside each OLT, which may be downloaded form another proyects, such as [opencord/openolt](https://github.com/opencord/openolt).
+The OpenFlow_Agent is a development which allows to configure a PON network through a simple RPC connection to the OLT and presenting the entire network as a single SDN device, having as much ports as users ports on the real network. This code must be executed on a computer or a server which has connectivity with every OLT deployed. Although, another code is needed inside each OLT, which may be downloaded form another projects, such as [opencord/openolt](https://github.com/opencord/openolt).
 
 In order to add simplicity to the development, a menu-driven user interface has been created.
 
@@ -46,9 +46,9 @@ docker-compose up -d --build
 ```
 
 ## OpenOLT
-In order to achieve the correct communication with the OLT, it's a requeriment to install the openolt service on the OLT. It can be found on the public GitHub repository [opencord/openolt](https://github.com/opencord/openolt), where it's detailed the installation procedure.
+To achieve a correct communication with the OLT, it is necessary to install the openolt service on the OLT. It can be found in the public GitHub repository [opencord/openolt](https://github.com/opencord/openolt), where the installation procedure is detailed.
 
 ## Contact
-This development belongs to GCOdeveloper. GCO is the optical communications research group from the University of Valladolid, Spain. As mainteiner and manager of the project, the group main contact is Noemí Merayo, whose mail address is as follows:
+This development belongs to GCOdeveloper. GCO is the optical communications research group at the University of Valladolid, Spain. As project leader and manager, the main contact of the group is Noemí Merayo, whose e-mail address is as follows:
 
 [noemer@uva.es](mailto:noemer@uva.es)
