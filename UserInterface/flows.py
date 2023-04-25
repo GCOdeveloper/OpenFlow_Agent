@@ -1,9 +1,6 @@
 """
     Copyright 2023, University of Valladolid.
     
-    Contributors: Carlos Manuel Sangrador, David de Pintos, Noemí Merayo,
-                  Alfredo Gonzalez, Miguel Campano.
-    
     User Interface for GCOdeveloper/OpenFlow_Agent.
 
     Licensed under the Apache License, Version 2.0 (the "License");

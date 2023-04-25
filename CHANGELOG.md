@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-04-25
+### Changed
+- Removed contributors from Copyright notes
+
 ## 2023-04-23
 ### Added
 - Contact section on README
