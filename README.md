@@ -48,6 +48,9 @@ docker-compose up -d --build
 ## OpenOLT
 To achieve a correct communication with the OLT, it is necessary to install the openolt service on the OLT. It can be found in the public GitHub repository [opencord/openolt](https://github.com/opencord/openolt), where the installation procedure is detailed.
 
+## Publications
+David de Pintos, Noemí Merayo, Carlos Sangrador, Juan Carlos Aguado, Ignacio de Miguel, and Ramón J. Durán Barroso, "Software defined networking agent demonstration to enable configuration and management of XGS-PON architectures," Journal of Optical Communications and Networking, 15(9), 620-637 (2023).
+
 ## Contact
 This development belongs to GCOdeveloper. GCO is the optical communications research group at the University of Valladolid, Spain. As project leader and manager, the main contact of the group is Noemí Merayo, whose e-mail address is as follows:
 
