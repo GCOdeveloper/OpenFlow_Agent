@@ -50,7 +50,12 @@ To achieve a correct communication with the OLT, it is necessary to install the 
 
 ## Publications
 
-D. de Pintos, N. Merayo, C. Sangrador, J. C. Aguado, I. de Miguel and R. J. Duran Barroso, "Software defined networking agent demonstration to enable configuration and management of XGS-PON architectures," in Journal of Optical Communications and Networking, vol. 15, no. 9, pp. 620-637, September 2023, doi: 10.1364/JOCN.494694.
+D. de Pintos, N. Merayo, C. Sangrador, J. C. Aguado, I. de Miguel and R. J. Duran Barroso, "Software defined networking agent demonstration to enable configuration and management of XGS-PON architectures," in Journal of Optical Communications and Networking, vol. 15, no. 9, pp. 620-637, September 2023, doi: 10.1364/JOCN.494694
+
+Funding Information.  This research is supported by Consejería de Educación de la Junta de Castilla y León and the European Regional Development Fund (Grant VA231P20) and by Ministerio de Ciencia e Innovación / Agencia Estatal de Investigación (Grant PID2020-112675RB-C42 funded by MCIN/AEI/10.13039/501100011033).
+
+Acknowledgment. We are grateful to Telnet R.I. for the supply of XGS-PON equipment (OLT, ONUs).
+
 
 ## Contact
 This development belongs to GCOdeveloper. GCO is the optical communications research group at the University of Valladolid, Spain. As project leader and manager, the main contact of the group is Noemí Merayo, whose e-mail address is as follows:
